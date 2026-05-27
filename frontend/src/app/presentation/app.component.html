@@ -1,0 +1,20 @@
+<nav class="border-b bg-white">
+  <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-900"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M14 21v-5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v5"/></svg>
+      <span class="font-semibold text-lg text-slate-900">Fundo</span>
+    </div>
+    @if (isAuthenticated()) {
+      <button (click)="logout()" class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        Logout
+      </button>
+    }
+  </div>
+</nav>
+
+<main>
+  <router-outlet />
+</main>
+
+<app-toast-container />
