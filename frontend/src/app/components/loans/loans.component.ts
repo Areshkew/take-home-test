@@ -2,7 +2,6 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@a
 import { httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { LoanService } from '../../services/loan.service';
@@ -14,7 +13,6 @@ import { Loan, PaginatedList, MakePaymentRequest } from '../../models/loan.model
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    MatPaginatorModule,
     CurrencyPipe,
     DatePipe,
   ],
@@ -40,7 +38,12 @@ export class LoansComponent {
 
   loans = computed(() => this.loansResource.value()?.items ?? []);
   totalCount = computed(() => this.loansResource.value()?.totalCount ?? 0);
+  totalPages = computed(() => this.loansResource.value()?.totalPages ?? 0);
+  hasPreviousPage = computed(() => this.pageNumber() > 1);
+  hasNextPage = computed(() => this.pageNumber() < this.totalPages());
   isLoading = computed(() => this.loansResource.isLoading());
+
+  pageSizeOptions = [5, 10, 25];
 
   // Create loan
   newAmount = signal<number | null>(null);
@@ -55,9 +58,25 @@ export class LoansComponent {
   // Detail view
   expandedLoanId = signal<string | null>(null);
 
-  onPageChange(event: PageEvent): void {
-    this.pageNumber.set(event.pageIndex + 1);
-    this.pageSize.set(event.pageSize);
+  setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.pageNumber.set(1);
+  }
+
+  goToPage(page: number): void {
+    this.pageNumber.set(page);
+  }
+
+  goPrevious(): void {
+    if (this.hasPreviousPage()) {
+      this.pageNumber.update(p => p - 1);
+    }
+  }
+
+  goNext(): void {
+    if (this.hasNextPage()) {
+      this.pageNumber.update(p => p + 1);
+    }
   }
 
   async createLoan(): Promise<void> {
@@ -120,6 +139,12 @@ export class LoansComponent {
 
   canPay(loan: Loan): boolean {
     return loan.status === 'Active' && loan.currentBalance > 0;
+  }
+
+  payButtonTitle(loan: Loan): string {
+    if (loan.status === 'Paid') return 'Loan is fully paid';
+    if (loan.currentBalance <= 0) return 'No balance remaining';
+    return 'Make a payment';
   }
 
   logout(): void {
