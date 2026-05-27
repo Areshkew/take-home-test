@@ -1,110 +1,76 @@
 import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    FormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-  ],
+  imports: [FormsModule],
   template: `
-    <div class="login-container">
-      <mat-card class="login-card">
-        <mat-card-header>
-          <mat-card-title>Fundo Loan Management</mat-card-title>
-          <mat-card-subtitle>Sign in to continue</mat-card-subtitle>
-        </mat-card-header>
+    <div class="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div class="w-full max-w-sm space-y-6">
+        <div class="text-center space-y-2">
+          <div class="flex justify-center">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M14 21v-5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v5"/></svg>
+            </div>
+          </div>
+          <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Fundo</h1>
+          <p class="text-sm text-slate-500">Sign in to manage loans</p>
+        </div>
 
-        <mat-card-content>
-          <form (ngSubmit)="login()" class="login-form">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Email</mat-label>
-              <input
-                matInput
-                type="email"
-                [(ngModel)]="email"
-                name="email"
-                placeholder="admin@fundo.com"
-                required
-                [disabled]="isLoading()"
-              />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Password</mat-label>
-              <input
-                matInput
-                type="password"
-                [(ngModel)]="password"
-                name="password"
-                placeholder="P@ssw0rd!"
-                required
-                [disabled]="isLoading()"
-              />
-            </mat-form-field>
-
-            @if (errorMessage()) {
-              <p class="error-text">{{ errorMessage() }}</p>
-            }
-
-            <button
-              mat-raised-button
-              color="primary"
-              type="submit"
-              class="full-width"
+        <form (ngSubmit)="login()" class="space-y-4">
+          <div class="space-y-2">
+            <label for="email" class="text-sm font-medium text-slate-700">Email</label>
+            <input
+              id="email"
+              type="email"
+              [(ngModel)]="email"
+              name="email"
+              placeholder="admin@fundo.com"
+              required
               [disabled]="isLoading()"
-            >
-              @if (isLoading()) {
-                <mat-spinner diameter="20" />
-              } @else {
-                Sign In
-              }
-            </button>
-          </form>
-        </mat-card-content>
-      </mat-card>
+              class="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="password" class="text-sm font-medium text-slate-700">Password</label>
+            <input
+              id="password"
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="P@ssw0rd!"
+              required
+              [disabled]="isLoading()"
+              class="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+
+          @if (errorMessage()) {
+            <p class="text-sm text-red-600">{{ errorMessage() }}</p>
+          }
+
+          <button
+            type="submit"
+            [disabled]="isLoading()"
+            class="inline-flex h-10 w-full items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            @if (isLoading()) {
+              <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            } @else {
+              Sign In
+            }
+          </button>
+        </form>
+      </div>
     </div>
-  `,
-  styles: `
-    .login-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 16px;
-    }
-    .login-card {
-      width: 100%;
-      max-width: 400px;
-    }
-    .login-form {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 16px;
-    }
-    .full-width {
-      width: 100%;
-    }
-    .error-text {
-      color: #f44336;
-      font-size: 14px;
-      margin: 0;
-    }
   `,
 })
 export class LoginComponent {

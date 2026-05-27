@@ -2,16 +2,8 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@a
 import { httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatChipsModule } from '@angular/material/chips';
 import { firstValueFrom } from 'rxjs';
 import { LoanService } from '../../services/loan.service';
 import { AuthService } from '../../services/auth.service';
@@ -22,16 +14,9 @@ import { Loan, PaginatedList, MakePaymentRequest } from '../../models/loan.model
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    MatTableModule,
     MatPaginatorModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCardModule,
-    MatProgressSpinnerModule,
-    MatIconModule,
-    MatChipsModule,
     CurrencyPipe,
+    DatePipe,
   ],
   templateUrl: './loans.component.html',
   styleUrls: ['./loans.component.scss'],
@@ -57,17 +42,18 @@ export class LoansComponent {
   totalCount = computed(() => this.loansResource.value()?.totalCount ?? 0);
   isLoading = computed(() => this.loansResource.isLoading());
 
-  // Create loan form signals
+  // Create loan
   newAmount = signal<number | null>(null);
   newApplicant = signal('');
   isCreating = signal(false);
 
-  // Payment form signals
+  // Payment
   paymentLoanId = signal<string | null>(null);
   paymentAmount = signal<number | null>(null);
   isPaying = signal(false);
 
-  displayedColumns = ['applicantName', 'amount', 'currentBalance', 'status', 'payments', 'actions'];
+  // Detail view
+  expandedLoanId = signal<string | null>(null);
 
   onPageChange(event: PageEvent): void {
     this.pageNumber.set(event.pageIndex + 1);
@@ -78,7 +64,7 @@ export class LoansComponent {
     const amount = this.newAmount();
     const applicant = this.newApplicant().trim();
     if (!amount || amount <= 0 || !applicant) {
-      this.snackBar.open('Please enter a valid amount and applicant name', 'Dismiss', { duration: 4000 });
+      this.snackBar.open('Please enter a valid amount and applicant name', 'Dismiss', { duration: 4000, panelClass: ['error-snackbar'] });
       return;
     }
 
@@ -107,7 +93,7 @@ export class LoansComponent {
   async makePayment(loanId: string): Promise<void> {
     const amount = this.paymentAmount();
     if (!amount || amount <= 0) {
-      this.snackBar.open('Please enter a valid payment amount', 'Dismiss', { duration: 4000 });
+      this.snackBar.open('Please enter a valid payment amount', 'Dismiss', { duration: 4000, panelClass: ['error-snackbar'] });
       return;
     }
 
@@ -126,6 +112,10 @@ export class LoansComponent {
     } finally {
       this.isPaying.set(false);
     }
+  }
+
+  toggleDetails(loanId: string): void {
+    this.expandedLoanId.set(this.expandedLoanId() === loanId ? null : loanId);
   }
 
   canPay(loan: Loan): boolean {
