@@ -2,13 +2,13 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { Router } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../services/auth.service';
+import { NotificationService } from '../services/notification.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const snackBar = inject(MatSnackBar);
   const authService = inject(AuthService);
+  const notification = inject(NotificationService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -25,11 +25,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         message = 'Resource not found.';
       }
 
-      snackBar.open(message, 'Dismiss', {
-        duration: 5000,
-        panelClass: ['error-snackbar'],
-      });
-
+      notification.error(message);
       return throwError(() => error);
     })
   );

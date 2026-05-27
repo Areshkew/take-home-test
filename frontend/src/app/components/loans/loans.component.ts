@@ -2,10 +2,10 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@a
 import { httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { LoanService } from '../../services/loan.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 import { Loan, PaginatedList, MakePaymentRequest } from '../../models/loan.model';
 
 @Component({
@@ -22,7 +22,7 @@ import { Loan, PaginatedList, MakePaymentRequest } from '../../models/loan.model
 export class LoansComponent {
   private loanService = inject(LoanService);
   private authService = inject(AuthService);
-  private snackBar = inject(MatSnackBar);
+  private notification = inject(NotificationService);
 
   pageNumber = signal(1);
   pageSize = signal(10);
@@ -83,7 +83,7 @@ export class LoansComponent {
     const amount = this.newAmount();
     const applicant = this.newApplicant().trim();
     if (!amount || amount <= 0 || !applicant) {
-      this.snackBar.open('Please enter a valid amount and applicant name', 'Dismiss', { duration: 4000, panelClass: ['error-snackbar'] });
+      this.notification.error('Please enter a valid amount and applicant name');
       return;
     }
 
@@ -92,7 +92,7 @@ export class LoansComponent {
       await firstValueFrom(this.loanService.createLoan({ amount, applicantName: applicant }));
       this.newAmount.set(null);
       this.newApplicant.set('');
-      this.snackBar.open('Loan created successfully', 'Dismiss', { duration: 3000 });
+      this.notification.success('Loan created successfully');
       this.loansResource.reload();
     } finally {
       this.isCreating.set(false);
@@ -112,7 +112,7 @@ export class LoansComponent {
   async makePayment(loanId: string): Promise<void> {
     const amount = this.paymentAmount();
     if (!amount || amount <= 0) {
-      this.snackBar.open('Please enter a valid payment amount', 'Dismiss', { duration: 4000, panelClass: ['error-snackbar'] });
+      this.notification.error('Please enter a valid payment amount');
       return;
     }
 
@@ -126,7 +126,7 @@ export class LoansComponent {
       await firstValueFrom(this.loanService.makePayment(loanId, request));
       this.paymentLoanId.set(null);
       this.paymentAmount.set(null);
-      this.snackBar.open('Payment applied successfully', 'Dismiss', { duration: 3000 });
+      this.notification.success('Payment applied successfully');
       this.loansResource.reload();
     } finally {
       this.isPaying.set(false);

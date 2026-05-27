@@ -37,8 +37,13 @@
 }
 
 @layer utilities {
-  .error-snackbar {
-    --mdc-snackbar-container-color: #dc2626;
-    --mat-snack-bar-button-color: #fff;
+  .tailwind-snackbar .mat-mdc-snack-bar-surface {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+  .tailwind-snackbar .mat-mdc-snack-bar-label {
+    padding: 0 !important;
   }
 }
