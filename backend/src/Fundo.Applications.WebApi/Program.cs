@@ -1,31 +1,15 @@
-﻿using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
-using System;
+using Fundo.Applications.WebApi.Data;
 
-namespace Fundo.Applications.WebApi
-{
-    public static class Program
-    {
-        public static void Main(string[] args)
-        {
-            try
-            {
-                CreateWebHostBuilder(args).Build().Run();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Unhandled WebApi exception: {ex.Message}");
-            }
-            finally
-            {
-                Console.WriteLine("Application shutting down.");
-            }
-        }
+var builder = WebApplication.CreateBuilder(args);
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
-        {
-            return WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
-        }
-    }
-}
+// Use Startup class for configuration
+var startup = new Fundo.Applications.WebApi.Startup(builder.Configuration);
+startup.ConfigureServices(builder.Services);
+
+var app = builder.Build();
+
+startup.Configure(app, app.Environment);
+
+await DbInitializer.SeedAsync(app.Services);
+
+app.Run();

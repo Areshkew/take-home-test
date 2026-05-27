@@ -1,0 +1,32 @@
+name: .NET CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "6.0.x"
+
+      - name: Restore
+        run: dotnet restore backend/src/src.sln
+
+      - name: Build
+        run: dotnet build backend/src/src.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test backend/src/src.sln --configuration Release --no-build --verbosity normal
+
+      - name: Docker Build
+        run: docker build -t fundo-backend ./backend

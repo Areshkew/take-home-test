@@ -3,12 +3,16 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<IsPackable>false</IsPackable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="FluentAssertions" Version="8.0.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.20" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.36" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.36" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
 		<PackageReference Include="Moq" Version="4.20.72" />
 		<PackageReference Include="xunit" Version="2.9.3" />
@@ -24,6 +28,9 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Fundo.Applications.WebApi\Fundo.Applications.WebApi.csproj" />
+		<ProjectReference Include="..\Fundo.Domain\Fundo.Domain.csproj" />
+		<ProjectReference Include="..\Fundo.Application\Fundo.Application.csproj" />
+		<ProjectReference Include="..\Fundo.Infrastructure\Fundo.Infrastructure.csproj" />
 	</ItemGroup>
 
 </Project>
