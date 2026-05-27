@@ -1,32 +1,13 @@
-.loans {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 20px;
-
-  &--container {
-    width: 60%;
-  }
+.spacer {
+  flex: 1 1 auto;
 }
 
-.mdc-data-table {
-  &__table {
-    margin-top: 20px;
-    border: 1px solid #dee5ed;
-    border-radius: 4px;
-  }
-
-  &__header-cell {
-    color: #7b8187;
-  }
+.brand {
+  margin-left: 8px;
+  font-weight: 500;
+  font-size: 20px;
 }
 
-@media (max-width: 992px) {
-  .loans {
-    &--container {
-      width: 100%;
-    }
-  }
+.main-content {
+  min-height: calc(100vh - 64px);
 }

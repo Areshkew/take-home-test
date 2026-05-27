@@ -1,0 +1,171 @@
+<div class="loans-page">
+  <div class="loans-header">
+    <h1>Loan Management</h1>
+    <button mat-stroked-button color="warn" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </div>
+
+  <!-- Create Loan Card -->
+  <mat-card class="create-card">
+    <mat-card-header>
+      <mat-card-title>Create New Loan</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form (ngSubmit)="createLoan()" class="create-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Applicant Name</mat-label>
+          <input matInput [(ngModel)]="newApplicant" name="applicant" placeholder="John Doe" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Loan Amount</mat-label>
+          <input matInput type="number" [(ngModel)]="newAmount" name="amount" placeholder="10000" min="1" required />
+          <span matTextPrefix>$&nbsp;</span>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" [disabled]="isCreating()">
+          @if (isCreating()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            <span class="btn-content">
+              <mat-icon>add</mat-icon>
+              Create Loan
+            </span>
+          }
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loans Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>All Loans</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (isLoading()) {
+        <div class="loading-overlay">
+          <mat-spinner diameter="40" />
+          <p>Loading loans...</p>
+        </div>
+      }
+
+      <div class="table-wrapper" [class.loading]="isLoading()">
+        <table mat-table [dataSource]="loans()" class="loans-table">
+          <!-- Applicant -->
+          <ng-container matColumnDef="applicantName">
+            <th mat-header-cell *matHeaderCellDef>Applicant</th>
+            <td mat-cell *matCellDef="let loan">{{ loan.applicantName }}</td>
+          </ng-container>
+
+          <!-- Amount -->
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef>Loan Amount</th>
+            <td mat-cell *matCellDef="let loan">{{ loan.amount | currency }}</td>
+          </ng-container>
+
+          <!-- Balance -->
+          <ng-container matColumnDef="currentBalance">
+            <th mat-header-cell *matHeaderCellDef>Current Balance</th>
+            <td mat-cell *matCellDef="let loan">{{ loan.currentBalance | currency }}</td>
+          </ng-container>
+
+          <!-- Status -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let loan">
+              <span
+                class="status-badge"
+                [class.active]="loan.status === 'Active'"
+                [class.paid]="loan.status === 'Paid'"
+              >
+                {{ loan.status }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Payments -->
+          <ng-container matColumnDef="payments">
+            <th mat-header-cell *matHeaderCellDef>Payments</th>
+            <td mat-cell *matCellDef="let loan">
+              {{ loan.payments.length }}
+            </td>
+          </ng-container>
+
+          <!-- Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let loan">
+              @if (paymentLoanId() === loan.id) {
+                <div class="payment-form">
+                  <mat-form-field appearance="outline" class="compact">
+                    <mat-label>Amount</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      [(ngModel)]="paymentAmount"
+                      name="paymentAmount"
+                      min="0.01"
+                      [max]="loan.currentBalance"
+                      step="0.01"
+                      placeholder="0.00"
+                      [disabled]="isPaying()"
+                    />
+                  </mat-form-field>
+                  <button
+                    mat-raised-button
+                    color="accent"
+                    (click)="makePayment(loan.id)"
+                    [disabled]="isPaying()"
+                  >
+                    @if (isPaying()) {
+                      <mat-spinner diameter="16" />
+                    } @else {
+                      Pay
+                    }
+                  </button>
+                  <button mat-button (click)="cancelPayment()" [disabled]="isPaying()">
+                    Cancel
+                  </button>
+                </div>
+              } @else {
+                <button
+                  mat-stroked-button
+                  color="accent"
+                  (click)="startPayment(loan.id)"
+                  [disabled]="!canPay(loan)"
+                >
+                  <mat-icon>payment</mat-icon>
+                  Pay
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+          <!-- Empty state -->
+          @if (loans().length === 0 && !isLoading()) {
+            <tr class="mat-row empty-row">
+              <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                No loans found.
+              </td>
+            </tr>
+          }
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="totalCount()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[5, 10, 25]"
+        [pageIndex]="pageNumber() - 1"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      />
+    </mat-card-content>
+  </mat-card>
+</div>
