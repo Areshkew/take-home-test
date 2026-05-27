@@ -3,12 +3,12 @@ import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { NotificationService } from '../services/notification.service';
+import { ToastService } from '../services/toast.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const authService = inject(AuthService);
-  const notification = inject(NotificationService);
+  const toast = inject(ToastService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -25,7 +25,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         message = 'Resource not found.';
       }
 
-      notification.error(message);
+      toast.error(message);
       return throwError(() => error);
     })
   );
