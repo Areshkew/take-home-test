@@ -11,8 +11,8 @@ export class NotificationService {
       data: { message, type } as SnackbarData,
       duration,
       panelClass: ['tailwind-snackbar'],
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom',
     });
   }
 
