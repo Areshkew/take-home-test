@@ -29,11 +29,13 @@ export class LoansComponent {
   // Pagination state
   pageNumber = signal(1);
   pageSize = signal(10);
+  private refreshTrigger = signal(0);
 
   // Trigger signal that drives the reactive fetch pipeline
   private query = computed(() => ({
     pageNumber: this.pageNumber(),
     pageSize: this.pageSize(),
+    refresh: this.refreshTrigger(),
   }));
 
   private loansResult$ = toObservable(this.query).pipe(
@@ -103,6 +105,7 @@ export class LoansComponent {
             this.newApplicant.set('');
             this.toast.success('Loan created successfully');
             this.pageNumber.set(1);
+            this.refreshTrigger.update(n => n + 1);
             resolve();
           },
           error: reject,
@@ -144,7 +147,7 @@ export class LoansComponent {
             this.paymentLoanId.set(null);
             this.paymentAmount.set(null);
             this.toast.success('Payment applied successfully');
-            this.pageNumber.set(this.pageNumber());
+            this.refreshTrigger.update(n => n + 1);
             resolve();
           },
           error: reject,
