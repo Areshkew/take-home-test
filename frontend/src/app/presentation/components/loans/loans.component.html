@@ -43,8 +43,9 @@
 
   <!-- Loans Table -->
   <div class="rounded-md border max-w-4xl mx-auto bg-white shadow-sm">
-    <div class="relative w-full overflow-auto">
-      @if (isLoading()) {
+    <!-- Scrollable table wrapper -->
+    <div class="relative w-full overflow-auto" style="max-height: 600px;">
+      @if (loansResult() === undefined) {
         <div class="flex flex-col items-center justify-center gap-3 py-12 text-slate-500">
           <svg class="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -54,7 +55,7 @@
         </div>
       } @else {
         <table class="w-full caption-bottom text-sm">
-          <thead class="[&_tr]:border-b">
+          <thead class="[&_tr]:border-b sticky top-0 bg-white z-10">
             <tr class="border-b transition-colors hover:bg-slate-50">
               <th class="h-12 px-4 text-left align-middle font-medium text-slate-500">Applicant</th>
               <th class="h-12 px-4 text-left align-middle font-medium text-slate-500">Loan Amount</th>
@@ -182,29 +183,62 @@
 
     <!-- Pagination -->
     @if (totalPages() > 0) {
-      <div class="border-t px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-2 text-sm text-slate-500">
+      <div class="border-t px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <!-- Page size selector -->
+        <div class="flex items-center gap-2 text-sm text-slate-500 flex-wrap">
           <span>Rows per page:</span>
-          <div class="relative">
-            <select
-              [value]="pageSize()"
-              (change)="setPageSize(+$any($event.target).value)"
-              class="h-8 appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-7 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 cursor-pointer"
+          @for (size of pageSizeOptions; track size) {
+            <button
+              (click)="setPageSize(size)"
+              [class.bg-slate-900]="pageSize() === size"
+              [class.text-white]="pageSize() === size"
+              [class.bg-white]="pageSize() !== size"
+              [class.text-slate-700]="pageSize() !== size"
+              class="inline-flex h-7 items-center justify-center rounded-md border border-slate-200 px-2 text-xs font-medium shadow-sm hover:bg-slate-50 transition-colors"
             >
-              @for (size of pageSizeOptions; track size) {
-                <option [value]="size">{{ size }}</option>
-              }
-            </select>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-              <path d="m6 9 6 6 6-6"/>
-            </svg>
-          </div>
-          <span class="ml-2">
+              {{ size }}
+            </button>
+          }
+          <button
+            (click)="showCustomPageSize.set(!showCustomPageSize())"
+            class="inline-flex h-7 items-center justify-center rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+          >
+            Custom
+          </button>
+          @if (showCustomPageSize()) {
+            <div class="flex items-center gap-1">
+              <input
+                type="number" [(ngModel)]="customPageSize" name="customPageSize"
+                min="1" max="1000" placeholder="#"
+                class="h-7 w-16 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+                (keydown.enter)="applyCustomPageSize()"
+              />
+              <button
+                (click)="applyCustomPageSize()"
+                class="inline-flex h-7 items-center justify-center rounded-md bg-slate-900 px-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800 transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          }
+          <span class="ml-1">
             {{ (pageNumber() - 1) * pageSize() + 1 }}–{{ (pageNumber() - 1) * pageSize() + loans().length }} of {{ totalCount() }}
           </span>
         </div>
 
-        <div class="flex items-center gap-1">
+        <!-- Page navigation -->
+        <div class="flex items-center gap-1 flex-wrap">
+          <!-- First -->
+          <button
+            (click)="goFirst()"
+            [disabled]="!hasPreviousPage()"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+            title="First page"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg>
+          </button>
+
+          <!-- Previous -->
           <button
             (click)="goPrevious()"
             [disabled]="!hasPreviousPage()"
@@ -214,19 +248,31 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
 
-          @for (page of [].constructor(totalPages()); track $index) {
+          <!-- Left ellipsis -->
+          @if (showLeftEllipsis()) {
+            <span class="inline-flex h-8 w-8 items-center justify-center text-sm text-slate-400">…</span>
+          }
+
+          <!-- Page numbers (windowed) -->
+          @for (page of visiblePages(); track page) {
             <button
-              (click)="goToPage($index + 1)"
-              [class.bg-slate-900]="pageNumber() === $index + 1"
-              [class.text-white]="pageNumber() === $index + 1"
-              [class.bg-white]="pageNumber() !== $index + 1"
-              [class.text-slate-700]="pageNumber() !== $index + 1"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors"
+              (click)="goToPage(page)"
+              [class.bg-slate-900]="pageNumber() === page"
+              [class.text-white]="pageNumber() === page"
+              [class.bg-white]="pageNumber() !== page"
+              [class.text-slate-700]="pageNumber() !== page"
+              class="inline-flex h-8 min-w-[32px] items-center justify-center rounded-md border border-slate-200 text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors px-1.5"
             >
-              {{ $index + 1 }}
+              {{ page }}
             </button>
           }
 
+          <!-- Right ellipsis -->
+          @if (showRightEllipsis()) {
+            <span class="inline-flex h-8 w-8 items-center justify-center text-sm text-slate-400">…</span>
+          }
+
+          <!-- Next -->
           <button
             (click)="goNext()"
             [disabled]="!hasNextPage()"
@@ -234,6 +280,16 @@
             title="Next page"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+
+          <!-- Last -->
+          <button
+            (click)="goLast()"
+            [disabled]="!hasNextPage()"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+            title="Last page"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 17 5-5-5-5"/><path d="m6 17 5-5-5-5"/></svg>
           </button>
         </div>
       </div>

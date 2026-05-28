@@ -47,11 +47,38 @@ export class LoansComponent {
   loans = computed(() => this.loansResult()?.items ?? []);
   totalCount = computed(() => this.loansResult()?.totalCount ?? 0);
   totalPages = computed(() => this.loansResult()?.totalPages ?? 0);
-  isLoading = computed(() => this.loansResult() === undefined);
   hasPreviousPage = computed(() => this.pageNumber() > 1);
   hasNextPage = computed(() => this.pageNumber() < this.totalPages());
 
-  pageSizeOptions = [5, 10, 25];
+  // Windowed pagination: show pages in a sliding window
+  visiblePages = computed(() => {
+    const current = this.pageNumber();
+    const total = this.totalPages();
+    const maxVisible = 7;
+
+    if (total <= maxVisible) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    let start = Math.max(1, current - 3);
+    let end = Math.min(total, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  });
+
+  showLeftEllipsis = computed(() => this.visiblePages()[0] > 1);
+  showRightEllipsis = computed(() => {
+    const pages = this.visiblePages();
+    return pages[pages.length - 1] < this.totalPages();
+  });
+
+  pageSizeOptions = [10, 25, 50, 100, 200];
+  customPageSize = signal<number | null>(null);
+  showCustomPageSize = signal(false);
 
   // Create loan form
   newAmount = signal<number | null>(null);
@@ -71,8 +98,26 @@ export class LoansComponent {
     this.pageNumber.set(1);
   }
 
+  applyCustomPageSize(): void {
+    const size = this.customPageSize();
+    if (size && size > 0 && size <= 1000) {
+      this.setPageSize(size);
+      this.showCustomPageSize.set(false);
+    }
+  }
+
   goToPage(page: number): void {
-    this.pageNumber.set(page);
+    if (page >= 1 && page <= this.totalPages()) {
+      this.pageNumber.set(page);
+    }
+  }
+
+  goFirst(): void {
+    this.pageNumber.set(1);
+  }
+
+  goLast(): void {
+    this.pageNumber.set(this.totalPages());
   }
 
   goPrevious(): void {
