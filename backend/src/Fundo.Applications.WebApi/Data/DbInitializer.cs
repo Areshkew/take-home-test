@@ -13,8 +13,11 @@ public static class DbInitializer
         var context = scope.ServiceProvider.GetRequiredService<LoanDbContext>();
         var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
 
-        if (context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+        if (context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory" &&
+            context.Database.ProviderName != "Microsoft.EntityFrameworkCore.Sqlite")
+        {
             await context.Database.MigrateAsync();
+        }
 
         if (!await context.Users.AnyAsync())
         {

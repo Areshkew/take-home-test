@@ -10,6 +10,9 @@ var app = builder.Build();
 
 startup.Configure(app, app.Environment);
 
-await DbInitializer.SeedAsync(app.Services);
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    await DbInitializer.SeedAsync(app.Services);
+}
 
 app.Run();
