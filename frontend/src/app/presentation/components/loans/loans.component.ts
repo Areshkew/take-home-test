@@ -1,18 +1,16 @@
 import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
-import { httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs';
 import { Loan } from '../../../domain/entities/loan.entity';
 import { LoanStatus } from '../../../domain/enums/loan-status.enum';
 import { PaginatedList } from '../../../domain/models/paginated-list';
-import { ListLoansUseCase, ListLoansQuery } from '../../../application/use-cases/list-loans.use-case';
-import { CreateLoanUseCase, CreateLoanCommand } from '../../../application/use-cases/create-loan.use-case';
-import { MakePaymentUseCase, MakePaymentCommand } from '../../../application/use-cases/make-payment.use-case';
+import { ListLoansUseCase } from '../../../application/use-cases/list-loans.use-case';
+import { CreateLoanUseCase } from '../../../application/use-cases/create-loan.use-case';
+import { MakePaymentUseCase } from '../../../application/use-cases/make-payment.use-case';
 import { LogoutUseCase } from '../../../application/use-cases/logout.use-case';
 import { ToastService } from '../../../infrastructure/services/toast.service';
-import { ValidationError } from '../../../domain/errors/validation.error';
-import { DomainError } from '../../../domain/errors/domain.error';
 
 @Component({
   selector: 'app-loans',
@@ -28,24 +26,28 @@ export class LoansComponent {
   private logoutUseCase = inject(LogoutUseCase);
   private toast = inject(ToastService);
 
+  // Pagination state
   pageNumber = signal(1);
   pageSize = signal(10);
 
-  loansResource = httpResource<PaginatedList<Loan>>(() => ({
-    url: 'http://localhost:5000/api/loans',
-    method: 'GET',
-    params: {
-      pageNumber: this.pageNumber().toString(),
-      pageSize: this.pageSize().toString(),
-    },
+  // Trigger signal that drives the reactive fetch pipeline
+  private query = computed(() => ({
+    pageNumber: this.pageNumber(),
+    pageSize: this.pageSize(),
   }));
 
-  loans = computed(() => this.loansResource.value()?.items ?? []);
-  totalCount = computed(() => this.loansResource.value()?.totalCount ?? 0);
-  totalPages = computed(() => this.loansResource.value()?.totalPages ?? 0);
+  private loansResult$ = toObservable(this.query).pipe(
+    switchMap(q => this.listLoans.execute(q))
+  );
+
+  loansResult = toSignal(this.loansResult$);
+
+  loans = computed(() => this.loansResult()?.items ?? []);
+  totalCount = computed(() => this.loansResult()?.totalCount ?? 0);
+  totalPages = computed(() => this.loansResult()?.totalPages ?? 0);
+  isLoading = computed(() => this.loansResult() === undefined);
   hasPreviousPage = computed(() => this.pageNumber() > 1);
   hasNextPage = computed(() => this.pageNumber() < this.totalPages());
-  isLoading = computed(() => this.loansResource.isLoading());
 
   pageSizeOptions = [5, 10, 25];
 
@@ -94,17 +96,20 @@ export class LoansComponent {
 
     this.isCreating.set(true);
     try {
-      await firstValueFrom(
-        this.createLoanUseCase.execute({ amount, applicantName: applicant })
-      );
-      this.newAmount.set(null);
-      this.newApplicant.set('');
-      this.toast.success('Loan created successfully');
-      this.loansResource.reload();
-    } catch (err: any) {
-      if (err instanceof ValidationError || err instanceof DomainError) {
-        this.toast.error((err as Error).message);
-      }
+      await new Promise<void>((resolve, reject) => {
+        this.createLoanUseCase.execute({ amount, applicantName: applicant }).subscribe({
+          next: () => {
+            this.newAmount.set(null);
+            this.newApplicant.set('');
+            this.toast.success('Loan created successfully');
+            this.pageNumber.set(1);
+            resolve();
+          },
+          error: reject,
+        });
+      });
+    } catch {
+      // Error interceptor handles HTTP errors
     } finally {
       this.isCreating.set(false);
     }
@@ -127,21 +132,26 @@ export class LoansComponent {
       return;
     }
 
-    const command: MakePaymentCommand = {
-      loanId,
-      amount,
-      idempotencyKey: `${loanId}-${Date.now()}`,
-    };
-
     this.isPaying.set(true);
     try {
-      await firstValueFrom(this.makePaymentUseCase.execute(command));
-      this.paymentLoanId.set(null);
-      this.paymentAmount.set(null);
-      this.toast.success('Payment applied successfully');
-      this.loansResource.reload();
-    } catch (err: any) {
-      // Error interceptor handles HTTP errors; domain errors would be caught here
+      await new Promise<void>((resolve, reject) => {
+        this.makePaymentUseCase.execute({
+          loanId,
+          amount,
+          idempotencyKey: `${loanId}-${Date.now()}`,
+        }).subscribe({
+          next: () => {
+            this.paymentLoanId.set(null);
+            this.paymentAmount.set(null);
+            this.toast.success('Payment applied successfully');
+            this.pageNumber.set(this.pageNumber());
+            resolve();
+          },
+          error: reject,
+        });
+      });
+    } catch {
+      // Error interceptor handles HTTP errors
     } finally {
       this.isPaying.set(false);
     }
