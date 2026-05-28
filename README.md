@@ -112,7 +112,7 @@ The fastest way to run the full stack:
 
 ```bash
 # 1. Clone and navigate to repo root
-git clone <your-fork-url>
+git clone https://github.com/Areshkew/take-home-test
 cd take-home-test
 
 # 2. Start everything (SQL Server + Backend)
@@ -311,9 +311,6 @@ The frontend uses Angular signals + `toObservable`/`toSignal` instead of RxJS su
 ### No NgRx / Redux
 For this scope, signals + use cases provide sufficient state management. Adding NgRx would introduce significant boilerplate without clear ROI for a CRUD-heavy feature set.
 
-### Tailwind over Angular Material
-Removed Angular Material entirely (~124 KB saved). All UI is custom Tailwind CSS, giving full design control and eliminating Material's theming complexity.
-
 ---
 
 ## Future Features & Improvements
@@ -347,9 +344,3 @@ Given more time, the following would be natural next steps:
 - [x] CQRS + MediatR pattern
 - [x] Domain modeling (`Money` value object, idempotency keys)
 - [x] Frontend DDD architecture
-
----
-
-## License
-
-This is a take-home test submission. Not licensed for production use.
