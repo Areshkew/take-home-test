@@ -1,26 +1,44 @@
-## Running the Backend
+# Fundo Backend
 
-To build the backend, navigate to the `src` folder and run:  
-```sh
-dotnet build
+.NET 6 Web API built with Clean Architecture, CQRS + MediatR, and EF Core.
+
+## Architecture
+
+```
+src/
+├── Fundo.Domain/               # Entities, Value Objects, Domain Events
+├── Fundo.Application/          # CQRS Handlers, DTOs, Validation
+├── Fundo.Infrastructure/       # EF Core, Repositories, Migrations, JWT
+├── Fundo.Applications.WebApi/  # Controllers, Middleware, DI
+└── Fundo.Services.Tests/       # Unit + Integration tests
 ```
 
-To run all tests:  
-```sh
+## Quick Start
+
+```bash
+# From backend/src/
+dotnet restore
+dotnet ef database update --project Fundo.Infrastructure --startup-project Fundo.Applications.WebApi
+dotnet run --project Fundo.Applications.WebApi
+```
+
+API: http://localhost:5000  
+Swagger: http://localhost:5000/swagger/index.html
+
+## Testing
+
+```bash
 dotnet test
 ```
 
-To start the main API:  
-```sh
-cd Fundo.Applications.WebApi  
-dotnet run
+38 tests: 22 domain unit tests, 6 handler unit tests, 10 integration tests.
+
+## Migrations
+
+```bash
+# Add a new migration
+dotnet ef migrations add MigrationName --project Fundo.Infrastructure --startup-project Fundo.Applications.WebApi
+
+# Update database
+dotnet ef database update --project Fundo.Infrastructure --startup-project Fundo.Applications.WebApi
 ```
-
-The following endpoint should return **200 OK**:  
-```http
-GET -> https://localhost:5001/loan
-```
-
-## Notes  
-
-Feel free to modify the code as needed, but try to **respect and extend the current architecture**, as this is intended to be a replica of the Fundo codebase.
